@@ -1,0 +1,101 @@
+-- FAKE ESP (Glitchy Rainbow Edition)  
+local function FakeESP()  
+    for _, player in pairs(game:GetService("Players"):GetPlayers()) do  
+        if player.Character then  
+            local sparkles = Instance.new("Sparkles")  
+            sparkles.Parent = player.Character.HumanoidRootPart  
+            sparkles.SparkleColor = Color3.new(math.random(), math.random(), math.random())  
+        end  
+    end  
+end  
+
+-- "Gun Drop" Notifier (Fake Coordinates)  
+game:GetService("Workspace").ChildAdded:Connect(function(child)  
+    if child.Name == "GunDrop" then  
+        game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync("[FAKE] 🚨 GUN DROPPED AT: "..tostring(Vector3.new(math.random(-100,100), 0, math.random(-100,100))))  
+    end  
+end)  
+
+-- "Role Reveal" (Random Names for Trolling)  
+task.spawn(function()  
+    wait(5)  
+    game:GetService("StarterGui"):SetCore("SendNotification", {  
+        Title = "FAKE MURDERER: "..game:GetService("Players"):GetPlayers()[1].Name,  
+        Text = "FAKE SHERIFF: "..game:GetService("Players"):GetPlayers()[2].Name,  
+        Duration = 5,  
+        Icon = "rbxassetid://ERROR"  
+    })  
+end)  
+
+-- "Trade Scam" Button (Ultimate Troll Mode)  
+local scamGUI = Instance.new("ScreenGui")  
+local scamButton = Instance.new("TextButton")  
+scamButton.Text = "🔥 TRADE SCAM 2024 (FREE KNIFE!)"  
+scamButton.Size = UDim2.new(0, 250, 0, 60)  
+scamButton.Position = UDim2.new(0.5, -125, 0.9, -30)  
+scamButton.BackgroundColor3 = Color3.new(1, 0.3, 0.3)  
+scamButton.MouseButton1Click:Connect(function()  
+    for i = 1, 10 do  
+        scamButton.Text = "SCAMMING INVENTORY... "..tostring(i*10).."%"  
+        wait(0.3)  
+    end  
+    scamButton.Text = "✅ YOUR MAIN ACCOUNT IS NOW BANNED"  
+end)  
+scamGUI.Parent = game:GetService("Players").LocalPlayer.PlayerGui  
+
+-- Fake "Be Murder/Sheriff" (Chaos Mode)  
+local function FakeRoleHacks()  
+    local trollFunctions = {  
+        BeMurder = function()  
+            game:GetService("Players").LocalPlayer.Character.Humanoid.WalkSpeed = 0  
+            task.wait(3)  
+            game:GetService("Players").LocalPlayer.Character:BreakJoints()  
+        end,  
+        BeSheriff = function()  
+            local msg = Instance.new("Message")  
+            msg.Text = "⚠️ YOUR IP: 127.0.0.1 | VIRUS DETECTED"  
+            msg.Parent = workspace  
+            wait(5)  
+            msg:Destroy()  
+        end  
+    }  
+    return trollFunctions  
+end  
+
+-- Bonus Fake Features (100% Undetectable* 😉)  
+local function FakePremiumHacks()  
+    -- "AntiCheat Bypass" (Instantly kicks you)  
+    local function AntiCheatBypass()  
+        game:GetService("Players").LocalPlayer:Kick("🤡 AC Bypass Failed: Enjoy the banwave!")  
+    end  
+
+    -- "Speed Hack" (Slows you down)  
+    local function SpeedHack()  
+        game:GetService("Players").LocalPlayer.Character.Humanoid.WalkSpeed = 5  
+    end  
+
+    -- "Aimbot" (Spins your camera)  
+    local function Aimbot()  
+        while true do  
+            game:GetService("Workspace").CurrentCamera.CFrame *= CFrame.Angles(0, math.rad(30), 0)  
+            task.wait()  
+        end  
+    end  
+
+    -- "Fly Hack" (Teleports you underground)  
+    local function FlyHack()  
+        game:GetService("Players").LocalPlayer.Character:MoveTo(Vector3.new(0, -1000, 0))  
+    end  
+
+    return {  
+        AntiCheatBypass = AntiCheatBypass,  
+        SpeedHack = SpeedHack,  
+        Aimbot = Aimbot,  
+        FlyHack = FlyHack  
+    }  
+end  
+
+-- Fake "VPN Protection" (Placeholder)  
+local function FakeVPN()  
+    game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync("[FAKE] 🔒 VPN CONNECTED: North Korea Server")  
+end  
