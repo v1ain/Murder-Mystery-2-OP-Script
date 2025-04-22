@@ -1,101 +1,119 @@
--- FAKE ESP (Glitchy Rainbow Edition)  
-local function FakeESP()  
-    for _, player in pairs(game:GetService("Players"):GetPlayers()) do  
-        if player.Character then  
-            local sparkles = Instance.new("Sparkles")  
-            sparkles.Parent = player.Character.HumanoidRootPart  
-            sparkles.SparkleColor = Color3.new(math.random(), math.random(), math.random())  
-        end  
-    end  
-end  
+--// Variables
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 
--- "Gun Drop" Notifier (Fake Coordinates)  
-game:GetService("Workspace").ChildAdded:Connect(function(child)  
-    if child.Name == "GunDrop" then  
-        game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync("[FAKE] 🚨 GUN DROPPED AT: "..tostring(Vector3.new(math.random(-100,100), 0, math.random(-100,100))))  
-    end  
-end)  
+local farming = false
+local coinsCollected = 0
+local tweenSpeed = 17
 
--- "Role Reveal" (Random Names for Trolling)  
-task.spawn(function()  
-    wait(5)  
-    game:GetService("StarterGui"):SetCore("SendNotification", {  
-        Title = "FAKE MURDERER: "..game:GetService("Players"):GetPlayers()[1].Name,  
-        Text = "FAKE SHERIFF: "..game:GetService("Players"):GetPlayers()[2].Name,  
-        Duration = 5,  
-        Icon = "rbxassetid://ERROR"  
-    })  
-end)  
+--// GUI
+local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+gui.Name = "CoinFarmUI"
+gui.ResetOnSpawn = false
 
--- "Trade Scam" Button (Ultimate Troll Mode)  
-local scamGUI = Instance.new("ScreenGui")  
-local scamButton = Instance.new("TextButton")  
-scamButton.Text = "🔥 TRADE SCAM 2024 (FREE KNIFE!)"  
-scamButton.Size = UDim2.new(0, 250, 0, 60)  
-scamButton.Position = UDim2.new(0.5, -125, 0.9, -30)  
-scamButton.BackgroundColor3 = Color3.new(1, 0.3, 0.3)  
-scamButton.MouseButton1Click:Connect(function()  
-    for i = 1, 10 do  
-        scamButton.Text = "SCAMMING INVENTORY... "..tostring(i*10).."%"  
-        wait(0.3)  
-    end  
-    scamButton.Text = "✅ YOUR MAIN ACCOUNT IS NOW BANNED"  
-end)  
-scamGUI.Parent = game:GetService("Players").LocalPlayer.PlayerGui  
+local button = Instance.new("TextButton")
+button.Parent = gui
+button.Size = UDim2.new(0, 160, 0, 50)
+button.Position = UDim2.new(0.5, -80, 0.9, 0)
+button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+button.Text = "АвтоФарм: OFF"
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.TextSize = 20
+button.Font = Enum.Font.SourceSansBold
 
--- Fake "Be Murder/Sheriff" (Chaos Mode)  
-local function FakeRoleHacks()  
-    local trollFunctions = {  
-        BeMurder = function()  
-            game:GetService("Players").LocalPlayer.Character.Humanoid.WalkSpeed = 0  
-            task.wait(3)  
-            game:GetService("Players").LocalPlayer.Character:BreakJoints()  
-        end,  
-        BeSheriff = function()  
-            local msg = Instance.new("Message")  
-            msg.Text = "⚠️ YOUR IP: 127.0.0.1 | VIRUS DETECTED"  
-            msg.Parent = workspace  
-            wait(5)  
-            msg:Destroy()  
-        end  
-    }  
-    return trollFunctions  
-end  
+local corner = Instance.new("UICorner")
+corner.Parent = button
+corner.CornerRadius = UDim.new(0, 10)
 
--- Bonus Fake Features (100% Undetectable* 😉)  
-local function FakePremiumHacks()  
-    -- "AntiCheat Bypass" (Instantly kicks you)  
-    local function AntiCheatBypass()  
-        game:GetService("Players").LocalPlayer:Kick("🤡 AC Bypass Failed: Enjoy the banwave!")  
-    end  
+--// Coin Finder
+local function findCoinsByColor(r, g, b)
+	local results = {}
+	local function search(obj)
+		for _, child in pairs(obj:GetChildren()) do
+			if child:IsA("BasePart") and child.Name == "Coin_Server" then
+				local color = child.Color
+				local cr, cg, cb = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
+				if cr == r and cg == g and cb == b then
+					table.insert(results, child)
+				end
+			end
+			search(child)
+		end
+	end
+	search(workspace)
+	return results
+end
 
-    -- "Speed Hack" (Slows you down)  
-    local function SpeedHack()  
-        game:GetService("Players").LocalPlayer.Character.Humanoid.WalkSpeed = 5  
-    end  
+--// Move Function
+local function moveTo(part)
+	if not part or not part:IsDescendantOf(workspace) then return end
+	local distance = (HumanoidRootPart.Position - part.Position).Magnitude
+	local tweenTime = distance / tweenSpeed
 
-    -- "Aimbot" (Spins your camera)  
-    local function Aimbot()  
-        while true do  
-            game:GetService("Workspace").CurrentCamera.CFrame *= CFrame.Angles(0, math.rad(30), 0)  
-            task.wait()  
-        end  
-    end  
+	local tween = TweenService:Create(HumanoidRootPart, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = part.CFrame + Vector3.new(0, 2, 0)})
+	tween:Play()
+	tween.Completed:Wait()
 
-    -- "Fly Hack" (Teleports you underground)  
-    local function FlyHack()  
-        game:GetService("Players").LocalPlayer.Character:MoveTo(Vector3.new(0, -1000, 0))  
-    end  
+	task.wait(0.5) -- стоим полсекунды на монете
+end
 
-    return {  
-        AntiCheatBypass = AntiCheatBypass,  
-        SpeedHack = SpeedHack,  
-        Aimbot = Aimbot,  
-        FlyHack = FlyHack  
-    }  
-end  
+--// Nearest Finder
+local function getNearestCoin(coins)
+	local closest
+	local minDist = math.huge
+	for _, coin in ipairs(coins) do
+		local dist = (HumanoidRootPart.Position - coin.Position).Magnitude
+		if dist < minDist then
+			minDist = dist
+			closest = coin
+		end
+	end
+	return closest
+end
 
--- Fake "VPN Protection" (Placeholder)  
-local function FakeVPN()  
-    game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync("[FAKE] 🔒 VPN CONNECTED: North Korea Server")  
-end  
+--// Farming Loop
+task.spawn(function()
+	while true do
+		task.wait(0.2)
+		if not farming then continue end
+
+		local targetCoins = {}
+
+		if coinsCollected < 20 then
+			targetCoins = findCoinsByColor(163, 162, 165) -- Серые
+		elseif coinsCollected < 40 then
+			targetCoins = findCoinsByColor(245, 205, 48) -- Жёлтые
+		end
+
+		if #targetCoins > 0 then
+			local nextCoin = getNearestCoin(targetCoins)
+			pcall(function()
+				moveTo(nextCoin)
+				coinsCollected += 1
+			end)
+		end
+
+		if coinsCollected >= 40 then
+			LocalPlayer:LoadCharacter()
+			coinsCollected = 0
+			wait(1)
+			Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+			HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+		end
+	end
+end)
+
+--// Toggle Button
+button.MouseButton1Click:Connect(function()
+	farming = not farming
+	if farming then
+		button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+		button.Text = "autofarm off"
+	else
+		button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+		button.Text = "autofarm off"
+	end
+end)
