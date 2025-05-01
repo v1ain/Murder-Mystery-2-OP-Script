@@ -1,119 +1,85 @@
---// Variables
-local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local Players = game:GetService("Players")
 
-local farming = false
-local coinsCollected = 0
-local tweenSpeed = 17
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = nil
 
---// GUI
-local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-gui.Name = "CoinFarmUI"
+-- GUI "Vlain made this"
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.ResetOnSpawn = false
 
-local button = Instance.new("TextButton")
-button.Parent = gui
-button.Size = UDim2.new(0, 160, 0, 50)
-button.Position = UDim2.new(0.5, -80, 0.9, 0)
-button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-button.Text = "АвтоФарм: OFF"
-button.TextColor3 = Color3.fromRGB(255, 255, 255)
-button.TextSize = 20
-button.Font = Enum.Font.SourceSansBold
+local label = Instance.new("TextLabel", gui)
+label.Size = UDim2.new(1, 0, 0, 50)
+label.Position = UDim2.new(0, 0, 0.4, 0)
+label.BackgroundTransparency = 1
+label.Text = "Vlain made this"
+label.TextScaled = true
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.Font = Enum.Font.GothamBold
 
-local corner = Instance.new("UICorner")
-corner.Parent = button
-corner.CornerRadius = UDim.new(0, 10)
+TweenService:Create(label, TweenInfo.new(1), {TextTransparency = 0}):Play()
+task.wait(2)
+TweenService:Create(label, TweenInfo.new(1), {TextTransparency = 1}):Play()
+task.wait(1)
+label:Destroy()
 
---// Coin Finder
-local function findCoinsByColor(r, g, b)
-	local results = {}
-	local function search(obj)
-		for _, child in pairs(obj:GetChildren()) do
-			if child:IsA("BasePart") and child.Name == "Coin_Server" then
-				local color = child.Color
-				local cr, cg, cb = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
-				if cr == r and cg == g and cb == b then
-					table.insert(results, child)
-				end
+local speed = 25
+local autoFarmEnabled = true
+
+-- Поиск ближайшей монеты
+local function getNearestCoin()
+	local nearest = nil
+	local minDist = math.huge
+
+	for _, part in pairs(workspace:GetDescendants()) do
+		if part:IsA("BasePart") and part.Name == "Coin_Server" then
+			local dist = (part.Position - humanoidRootPart.Position).Magnitude
+			if dist < minDist then
+				minDist = dist
+				nearest = part
 			end
-			search(child)
 		end
 	end
-	search(workspace)
-	return results
+
+	return nearest
 end
 
---// Move Function
-local function moveTo(part)
+-- Движение к монете
+local function moveToPart(part)
 	if not part or not part:IsDescendantOf(workspace) then return end
-	local distance = (HumanoidRootPart.Position - part.Position).Magnitude
-	local tweenTime = distance / tweenSpeed
 
-	local tween = TweenService:Create(HumanoidRootPart, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = part.CFrame + Vector3.new(0, 2, 0)})
+	local dist = (part.Position - humanoidRootPart.Position).Magnitude
+	local time = dist / speed
+
+	local tween = TweenService:Create(humanoidRootPart, TweenInfo.new(time, Enum.EasingStyle.Linear), {
+		CFrame = CFrame.new(part.Position + Vector3.new(0, 3, 0))
+	})
 	tween:Play()
 	tween.Completed:Wait()
-
-	task.wait(0.5) -- стоим полсекунды на монете
 end
 
---// Nearest Finder
-local function getNearestCoin(coins)
-	local closest
-	local minDist = math.huge
-	for _, coin in ipairs(coins) do
-		local dist = (HumanoidRootPart.Position - coin.Position).Magnitude
-		if dist < minDist then
-			minDist = dist
-			closest = coin
+-- Главный автофарм-поток
+local function startAutoFarm()
+	task.spawn(function()
+		while autoFarmEnabled do
+			local target = getNearestCoin()
+			if target then
+				moveToPart(target)
+				task.wait(0.5)
+			else
+				task.wait(1)
+			end
 		end
-	end
-	return closest
+	end)
 end
 
---// Farming Loop
-task.spawn(function()
-	while true do
-		task.wait(0.2)
-		if not farming then continue end
+-- Поддержка респавна
+local function onCharacterAdded(char)
+	character = char
+	humanoidRootPart = char:WaitForChild("HumanoidRootPart")
+	startAutoFarm()
+end
 
-		local targetCoins = {}
-
-		if coinsCollected < 20 then
-			targetCoins = findCoinsByColor(163, 162, 165) -- Серые
-		elseif coinsCollected < 40 then
-			targetCoins = findCoinsByColor(245, 205, 48) -- Жёлтые
-		end
-
-		if #targetCoins > 0 then
-			local nextCoin = getNearestCoin(targetCoins)
-			pcall(function()
-				moveTo(nextCoin)
-				coinsCollected += 1
-			end)
-		end
-
-		if coinsCollected >= 40 then
-			LocalPlayer:LoadCharacter()
-			coinsCollected = 0
-			wait(1)
-			Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-			HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-		end
-	end
-end)
-
---// Toggle Button
-button.MouseButton1Click:Connect(function()
-	farming = not farming
-	if farming then
-		button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-		button.Text = "autofarm off"
-	else
-		button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-		button.Text = "autofarm off"
-	end
-end)
+player.CharacterAdded:Connect(onCharacterAdded)
+onCharacterAdded(character)
